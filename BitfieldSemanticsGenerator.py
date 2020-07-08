@@ -42,16 +42,14 @@ def tune_alignment(string, alignment_index):
         return string
     spc_pos = find_2nd_space(string) + 1
     delta = alignment_index - spc_pos
-    i = 0
-    while i < delta:
-        string = string[0:spc_pos] + ' ' + string[spc_pos:]
-        i += 1
+    spaces = [' '] * delta
+    string = string[0:spc_pos] + ''.join(spaces) + string[spc_pos:]
     return string
 
 sub_entries = []
-sub_entries.append('/*----------------------------------------------------------------------------*/\n')
-sub_entries.append('/* Bit definitions for ' + device + ' ---------------------------------------------------------------*/\n')
-sub_entries.append('/*----------------------------------------------------------------------------*/\n')
+sub_entries.append('/*-----------------------------------------------------------------------------------------*/\n')
+sub_entries.append('/* Bit definitions for ' + device + ' -----------------------------------------------------*/\n')
+sub_entries.append('/*-----------------------------------------------------------------------------------------*/\n')
 
 for reg, entry in enumerate(bit_semantics):
     sub_entries.append('/* Registrer '+ str(reg) +' ---------------------------------------------------------------*/\n')
