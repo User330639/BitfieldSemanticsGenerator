@@ -1,4 +1,5 @@
-base_semantics = 'HMCAD1511_R'
+device = 'HMCAD1511'
+base_semantics = device + '_R'
 # Semantics, length, position
 bit_semantics = [['0x00', ['RST', 1, 0]],
                  ['0x0F', ['SLEEP4_CH', 4, 0],     ['SLEEP2_CH', 2, 4],   ['SLEEP1_CH_1', 1, 6], ['SLEEP', 1, 8], ['PD', 1, 9], ['PD_PIN', 2, 10]],
@@ -28,34 +29,64 @@ bit_semantics = [['0x00', ['RST', 1, 0]],
                  ['0x55', ['FS_CTL', 6, 0]],
                  ['0x56', ['STARTUP_CTL', 3, 0]]]
 
-output_data = '/*----------------------------------------------------------------------------*/\n'
-output_data += '/* Bit definitions for HMCAD1511 ---------------------------------------------*/\n'
-output_data += '/*----------------------------------------------------------------------------*/\n'
+def find_2nd_space(string):
+    pos = string.find(' ')
+    pos = string.find(' ', pos + 1)
+    return pos
 
-reg = 0
+def tune_alignment(string, alignment_index):
+    if string[0] == '/':
+        base_comment_string = '/*----------------------------------------------------------------------------*/\n'
+        while len(string) != len(base_comment_string):
+            string = string.replace('-', '', 1)
+        return string
+    spc_pos = find_2nd_space(string) + 1
+    delta = alignment_index - spc_pos
+    i = 0
+    while i < delta:
+        string = string[0:spc_pos] + ' ' + string[spc_pos:]
+        i += 1
+    return string
 
-for entry in bit_semantics:
-    output_data += '/* Registrer '+ str(reg) +' ---------------------------------------------------------------*/\n'
-    output_data += '#define ' + base_semantics + '{:02d}'.format(reg) + '_ADDRESS ' + entry[0] + '\n\n'
+sub_entries = []
+sub_entries.append('/*----------------------------------------------------------------------------*/\n')
+sub_entries.append('/* Bit definitions for ' + device + ' ---------------------------------------------------------------*/\n')
+sub_entries.append('/*----------------------------------------------------------------------------*/\n')
+
+for reg, entry in enumerate(bit_semantics):
+    sub_entries.append('/* Registrer '+ str(reg) +' ---------------------------------------------------------------*/\n')
+    sub_entries.append('#define ' + base_semantics + '{:02d}'.format(reg) + '_ADDRESS ' + entry[0] + '\n\n')
     for fields in entry[1:]:
         base = base_semantics + '{:02d}'.format(reg) + '_' + fields[0]
         pos = base + '_Pos'
         msk = base + '_Msk'
         msk_num = 2**(fields[1]) - 1
-        output_data += '#define ' + pos + ' ' + str(fields[2]) + '\n'
-        output_data += '#define ' + msk + ' (' + str(msk_num) + ' << ' + pos + ')' + '\n'
+        sub_entries.append('#define ' + pos + ' ' + str(fields[2]) + '\n')
+        sub_entries.append('#define ' + msk + ' (' + str(msk_num) + ' << ' + pos + ')' + '\n')
         if fields[1] > 1:
             i = 0
-            for bit in range(fields[1]):
+            for i, bit in enumerate(range(fields[1])):
                 bit_mask = 2**i
-                output_data += '#define ' + base + '_' + str(i) + ' (' + str(bit_mask) + ' << ' + pos + ')' + '\n'
+                sub_entries.append('#define ' + base + '_' + str(i) + ' (' + str(bit_mask) + ' << ' + pos + ')' + '\n')
                 i += 1
         else:
-            output_data += '#define ' + base + ' ' + msk + '\n'
-        output_data += '\n'
-    reg += 1
+            sub_entries.append('#define ' + base + ' ' + msk + '\n')
+        sub_entries.append('\n')
 
-f = open('test.c', 'w')
+align_indexes = []
+
+for entry in sub_entries:
+    align_indexes.append(find_2nd_space(entry) + 1)
+    
+output_data = ''
+
+for entry in sub_entries:
+    entry = tune_alignment(entry, max(align_indexes))
+    output_data += entry
+output_data += '\n'
+
+filename = device.lower() + '.h'
+f = open(filename, 'w')
 f.write(output_data)
 f.close()
 
