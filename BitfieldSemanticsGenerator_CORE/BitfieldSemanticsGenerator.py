@@ -1,3 +1,5 @@
+import os
+
 device = 'HMCAD1511'
 base_semantics = device + '_R'
 # Semantics, length, position
@@ -62,11 +64,9 @@ for reg, entry in enumerate(bit_semantics):
         sub_entries.append('#define ' + pos + ' ' + str(fields[2]) + '\n')
         sub_entries.append('#define ' + msk + ' (' + str(msk_num) + ' << ' + pos + ')' + '\n')
         if fields[1] > 1:
-            i = 0
             for i, bit in enumerate(range(fields[1])):
                 bit_mask = 2**i
                 sub_entries.append('#define ' + base + '_' + str(i) + ' (' + str(bit_mask) + ' << ' + pos + ')' + '\n')
-                i += 1
         else:
             sub_entries.append('#define ' + base + ' ' + msk + '\n')
         sub_entries.append('\n')
@@ -83,8 +83,15 @@ for entry in sub_entries:
     output_data += entry
 output_data += '\n'
 
-filename = device.lower() + '.h'
-f = open(filename, 'w')
+output_dir_path = './generated'
+
+try:
+    os.makedirs(output_dir_path)
+except FileExistsError:
+    pass
+
+path = output_dir_path + '/' + device.lower() + '.h'
+f = open(path, 'w')
 f.write(output_data)
 f.close()
 
