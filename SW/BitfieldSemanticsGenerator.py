@@ -117,5 +117,3 @@ path = output_dir_path + '/' + device.lower() + '.h'
 f = open(path, 'w')
 f.write(output_data)
 f.close()
-
-print(output_data)
